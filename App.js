@@ -1,28 +1,24 @@
-import { StyleSheet, Text, View } from 'react-native'
 import { NavigationContainer } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 
 const Stack = createStackNavigator()
 
-function Home() {
-  return <View style={styles.container}>
-    <Text>aaaaaaaaaaa</Text>
-  </View>
+function Entradas() {
+  return <NavigationContainer>
+    <Stack.Navigator>
+      <Stack.Screen name="Entrar" component={Entrar}/>
+      <Stack.Screen name="Registrar" component={Registrar}/>
+    </Stack.Navigator>
+  </NavigationContainer>
 }
 
 export default function App() {
   return <NavigationContainer>
     <Stack.Navigator>
-      <Stack.Screen name="Home" component={Home}/>
+      <Stack.Screen name="Entradas" component={Entradas}/>
+      <Stack.Screen name="Listas" component={Listas}/>
+      <Stack.Screen name="Grupos" component={Grupos}/>
+      <Stack.Screen name="Notas" component={Notas}/>
     </Stack.Navigator>
   </NavigationContainer>
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-})
