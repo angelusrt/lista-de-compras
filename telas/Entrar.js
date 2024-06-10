@@ -5,13 +5,12 @@ import { useEffect, useState } from 'react'
 
 import { colors, styles } from "../Styles"
 import Pop from "./Pop"
+import { insertUsuarios, selectUsuario } from "../database/Database"
+import { SQLiteDatabase } from "expo-sqlite"
 
 async function authenticate() {
   const hasBiometric = await LocalAuthentication.hasHardwareAsync()
-
-  if (!hasBiometric) {
-    return false
-  }
+  if (!hasBiometric) { return false }
 
   const result = await LocalAuthentication.authenticateAsync({
     promptMessage: 'Authenticate to access the app.',
@@ -20,14 +19,11 @@ async function authenticate() {
     cancelLabel: 'Cancel',
   })
 
-  if (result.success) {
-    return true
-  }
+  if (result.success) { return true }
 
   return false
 }
 
-// () => setModal(s => !s)
 /**
  * @param {Object} args 
  * @param {import("@react-navigation/native").NavigationProp} args.navigation
@@ -86,33 +82,31 @@ function EntrarView(args) {
   </View>
 }
 
-function Entrar({ navigation }) {
+/**@param {Object} param 
+ * @param {import("@react-navigation/native").NavigationProp} param.navigation 
+ * @param {import("../App").setId} param.setId 
+ * @param {SQLiteDatabase} param.db 
+ */
+function Entrar({ navigation, db,  setId }) {
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
-  const [modal, setModal] = useState(false)
   const [modalText, setModalText] = useState("")
-
-  function handleEmail(e) {
-    setEmail(e)
-  }
-
-  function handleSenha(e) {
-    setSenha(e)
-  }
-
-  function handleModal() {
-    setModal(e => !e)
-  }
+  const [modal, setModal] = useState(false)
 
   async function enter() {
     const e = await AsyncStorage.getItem("email")
     const s = await AsyncStorage.getItem("senha")
+    // const i = await AsyncStorage.getItem("id")
+    const i = await selectUsuario(db, email, senha)
 
-    if (e === email && s === senha) {
+    if (e === email && s === senha && i.id != null) {
+      setId(i.id)
       navigation.navigate("Listas")
     } else {
       if (e === null || s === null) {
         setModalText("Email não encontrado, cadastre-se!")
+      } else if (i.id == null) {
+        setModalText("Error ao entrar!")
       } else {
         setModalText("Email ou senha incorreta!")
       }
@@ -122,15 +116,10 @@ function Entrar({ navigation }) {
   }
 
   useEffect(() => {
-    async function auth() {
-      auth = await authenticate()
-
-      if (auth) {
-        navigation.navigate("Listas")
-      }
-    }
-
-    auth()
+    (async function() {
+      if (await authenticate())  
+        navigation.navigate("Listas") 
+    })()
   }, [])
 
   return <EntrarView
@@ -140,38 +129,42 @@ function Entrar({ navigation }) {
     senha={senha}
     modal={modal}
     modalText={modalText}
-    setEmail={handleEmail}
-    setSenha={handleSenha}
-    setModal={handleModal}
+    setEmail={(e) => setEmail(e)}
+    setSenha={(e) => setSenha(e)}
+    setModal={() => setModal(e => !e)}
     enter={enter}
     navigation={navigation}
   />
 }
 
-function Registrar({ navigation }) {
+/**@param {Object} param 
+ * @param {import("@react-navigation/native").NavigationProp} param.navigation 
+ * @param {import("../App").setId} param.setId 
+ * @param {SQLiteDatabase} param.db 
+ */
+function Registrar({ navigation, db, setId }) {
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
   const [modal, setModal] = useState(false)
   const [modalText, setModalText] = useState("")
 
-  function handleEmail(e) {
-    setEmail(e)
-  }
-
-  function handleSenha(e) {
-    setSenha(e)
-  }
-
-  function handleModal() {
-    setModal(e => !e)
-  }
-
-  function enter() {
+  async function enter() {
     if (senha.includes("react-native")) {
-      AsyncStorage.setItem("email", email)
-      AsyncStorage.setItem("senha", senha)
+      await insertUsuarios(db, email, senha)
+      const id = await selectUsuario(db, email, senha)
 
-      navigation.navigate("Listas")
+      if (id.id === "null"){
+        setModalText("Erro ao cadastrar!")
+        setModal(true)
+
+      } else {
+        AsyncStorage.setItem("email", email)
+        AsyncStorage.setItem("senha", senha)
+        AsyncStorage.setItem("id", id.id)
+        setId(id.id)
+
+        navigation.navigate("Listas")
+      }
     } else {
       setModalText("Senha não possui 'react-native', coloque!")
       setModal(true)
@@ -185,9 +178,9 @@ function Registrar({ navigation }) {
     senha={senha}
     modal={modal}
     modalText={modalText}
-    setEmail={handleEmail}
-    setSenha={handleSenha}
-    setModal={handleModal}
+    setEmail={(e) => setEmail(e)}
+    setSenha={(e) => setSenha(e)}
+    setModal={() => setModal(e => !e)}
     enter={enter}
     navigation={navigation}
   />

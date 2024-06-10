@@ -23,10 +23,7 @@ function Pop({vis, setVis, text}) {
     <View style={styles.centeredView}>
       <View style={styles.modalView}>
         <Text style={styles.text}>{text}</Text>
-        <TouchableOpacity
-          style={styles.button3}
-          onPress={setVis}
-        >
+        <TouchableOpacity style={styles.button3} onPress={setVis}>
           <Text style={styles.buttonText1}>Fechar</Text>
         </TouchableOpacity>
       </View>

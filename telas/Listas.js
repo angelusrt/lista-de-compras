@@ -1,6 +1,8 @@
 import { Text, TextInput, Pressable, View, Modal, ScrollView } from "react-native"
 import { colors, styles } from "../Styles"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { insertListas, selectListas } from "../database/Database"
+import { SQLiteDatabase } from "expo-sqlite"
 
 /**
  * @param {Object} param 
@@ -30,12 +32,14 @@ function ListaPop({vis, setVis, nome, setNome, add}) {
           placeholder="Nome"
           placeholderTextColor={colors.grey}
         />
-        <Pressable
-          style={styles.button4}
-          onPress={add}
-        >
+        <Pressable style={styles.button4} onPress={add}>
           <Text style={styles.buttonText1}>
             Adicionar
+          </Text>
+        </Pressable>
+        <Pressable style={styles.button3} onPress={setVis}>
+          <Text style={styles.buttonText1}>
+            Voltar
           </Text>
         </Pressable>
       </View>
@@ -43,60 +47,65 @@ function ListaPop({vis, setVis, nome, setNome, add}) {
   </Modal>
 }
 
-function Listas() {
+/**@param {Object} args 
+ * @param {number} args.id
+ * @param {SQLiteDatabase} args.db
+ * @param {import("../App").setId} args.setListaId
+ * @param {import("@react-navigation/native").NavigationProp} param.navigation 
+ */
+function Listas({db, id, setListaId, navigation}) {
   const [listas, setListas] = useState([])
   const [nome, setNome] = useState("")
   const [modal, setModal] = useState(false)
 
-  function handleNome(e) {
-    setNome(e)
+  async function getListas() {
+    const l = await selectListas(db, id)
+    setListas(l)
   }
 
-  function handleModal() {
-    setModal(e => !e)
-  }
-
-  function pop() {
-    setModal(true)
-  }
-
-  function add() {
-    function appendToListas(oldState) {
-      let newState = oldState
-      console.log(oldState)
-      
-      newState.push({
-        nome: nome,
-        data: Date.now()
-      })
-
-      return newState
-    }
-
-    setListas(appendToListas)
+  async function add() {
+    const date = new Date()
+    const now = date.toISOString()
+    
+    await insertListas(db, nome, now, id)
+    getListas()
     setNome("")
     setModal(false)
   }
 
+  function goNotas(id) {
+    setListaId(id)
+    navigation.navigate("Notas")
+  }
+
+  useEffect(() => { getListas() },[])
 
   return <ScrollView style={styles.view}>
     <View style={styles.rowView}>
       <Text style={styles.title2}>Listas</Text>
-      <Pressable style={styles.button4} onPress={pop}>
+      <Pressable 
+        style={styles.button4} 
+        onPress={() => setModal(true)}
+      >
         <Text style={styles.buttonText1}>+</Text>
       </Pressable>
     </View>
     <ListaPop
       vis={modal}
       nome={nome}
-      setVis={handleModal}
-      setNome={handleNome}
+      setVis={() => setModal(e => !e)}
+      setNome={(e) => setNome(e)}
       add={add}
     />
-    {listas.map((lista, key) => 
+    {listas.lenght != 0 && typeof listas[0] == "object" && listas.map((lista, key) => 
       <View key={key} style={styles.cardView}>
         <Text style={styles.title3}>{lista.nome}</Text>
         <Text style={styles.text}>{lista.data}</Text>
+        <Pressable style={styles.button4} onPress={() => goNotas(lista.id)}>
+          <Text style={styles.buttonText1}>
+            Adicionar
+          </Text>
+        </Pressable>
       </View>
      )}
   </ScrollView>

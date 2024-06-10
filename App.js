@@ -2,17 +2,35 @@ import { NavigationContainer } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 
 import Listas from "./telas/Listas"
-import Grupos from "./telas/Grupos"
 import Notas from "./telas/Notas"
+import * as Database from "./database/Database"
 import { Entrar, Registrar } from "./telas/Entrar"
 import { colors } from "./Styles"
+import { useEffect, useState } from "react"
+import { SQLiteDatabase } from "expo-sqlite"
 
 const Stack = createStackNavigator()
 
-function Entradas() {
-  return <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Entrar" component={Entrar}/>
-    <Stack.Screen name="Registrar" component={Registrar}/>
+/**
+ * @typedef {Function} setId
+ * @param {number} id 
+ * @returns {void}
+ */
+
+/** @param {Object} args 
+ *  @param {setId} args.setId
+ *  @param {SQLiteDatabase} args.db
+ */
+function Entradas(args) {
+  return <Stack.Navigator 
+    screenOptions={{ headerShown: false }}
+  >
+    <Stack.Screen name="Entrar">
+      {(e) => <Entrar setId={args.setId} db={args.db} navigation={e.navigation}/>}
+    </Stack.Screen>
+    <Stack.Screen name="Registrar">
+      {(e) => <Registrar setId={args.setId} db={args.db} navigation={e.navigation}/>}
+    </Stack.Screen>
   </Stack.Navigator>
 }
 
@@ -30,18 +48,37 @@ const theme = {
 }
 
 function App() {
+  const [id, setId] = useState(null)
+  const [listaId, setListaId] = useState(null)
+  const [db, setDB] = useState(null)
+
+  useEffect(() => {
+    async function initDB() {
+      const db = await Database.openDB()
+      await Database.createUsuario(db)
+      await Database.createListas(db)
+      await Database.createItens(db)
+
+      setDB(db)
+    }
+
+    initDB()
+  },[])
+
   return <NavigationContainer theme={theme}>
     <Stack.Navigator 
-      initialRouteName="Listas"
-      screenOptions={{ 
-        headerShown: false, 
-        cardStyle: {height: "100%"}
-      }} 
+      initialRouteName="Entradas"
+      screenOptions={{cardStyle: {height: "100%"}}} 
     >
-      <Stack.Screen name="Entradas" component={Entradas}/>
-      <Stack.Screen name="Listas" component={Listas}/>
-      <Stack.Screen name="Grupos" component={Grupos}/>
-      <Stack.Screen name="Notas" component={Notas}/>
+      <Stack.Screen name="Entradas">
+        {() => <Entradas setId={(e) => setId(e)} db={db}/>}
+      </Stack.Screen>
+      <Stack.Screen name="Listas">
+          {(e) => <Listas id={id} setListaId={(e) => setListaId(e)} db={db} navigation={e.navigation}/>}
+      </Stack.Screen>
+      <Stack.Screen name="Notas">
+        {() => <Notas db={db} id={listaId}/>}
+      </Stack.Screen>
     </Stack.Navigator>
   </NavigationContainer>
 }

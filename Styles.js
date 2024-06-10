@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontFamily: "sans-serif",
     fontSize: 30,
-    fontWeight: 700,
+    fontWeight: "700",
     marginBottom: 40
   },
   title2: {
@@ -50,20 +50,20 @@ const styles = StyleSheet.create({
     fontFamily: "sans-serif",
     fontSize: 30,
     marginRight: "auto",
-    fontWeight: 700,
+    fontWeight: "700",
   },
   title3: {
     color: colors.white,
     fontFamily: "sans-serif",
     fontSize: 30,
-    fontWeight: 700,
+    fontWeight: "700",
     marginBottom: 20
   },
   subtitle: {
     color: colors.white,
     fontFamily: "sans-serif",
     fontSize: 20,
-    fontWeight: 600,
+    fontWeight: "600",
     marginBottom: 20
   },
   text: {
